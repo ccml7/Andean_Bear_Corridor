@@ -12,21 +12,22 @@ earth_env <- raster("MODCF_meanannual.tif")
 
 setwd("/home/camilo/Documentos/Mariana/Corredor/Tremarctos_Corridor")
 
-tolima_shape <- shapefile("./analysis_layers/tolima_wgs84.shp")
-niche_m <- shapefile("./analysis_layers/buffer_oc_wgs84.shp")
+tolima_shape <- shapefile("./analysis_layers/shapes/tolima_wgs84.shp")
+niche_m <- shapefile("./analysis_layers/shapes/buffer_oc_wgs84.shp")
 
 worldclim_cut <- mask(crop(worldclim, niche_m), niche_m)
 earth_env_cut <- mask(crop(earth_env, niche_m), niche_m)
 
 for (i in seq(1, length(names(worldclim_cut)))) {
     writeRaster(worldclim_cut[[i]],
-        paste("./analysis_layers/raster/",
+        paste("./analysis_layers/raster/predictors/",
         names(worldclim_cut)[i],
         "_NicheM.tif", sep = ""),
         overwrite = T)
 }
 
-writeRaster(earth_env_cut, "./analysis_layers/raster/Mean_Nubosity_NicheM.tif")
+writeRaster(earth_env_cut,
+            "./analysis_layers/raster/predictors/Mean_Nubosity_NicheM.tif")
 
 ## Bias Layer
 gbif_bias <- read.csv("./data/Gbif_Bias_Data.csv", header = T, sep = "\t")
@@ -79,6 +80,6 @@ bias_count_raster <- bias_count_raster / max_count_bias
 plot(bias_count_raster)
 
 writeRaster(bias_count_raster, 
-            "./analysis_layers/raster/bias_raster.tif",
+            "./analysis_layers/bias_raster.tif",
             overwrite = TRUE
 )
