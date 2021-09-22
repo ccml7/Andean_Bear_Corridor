@@ -7,6 +7,8 @@ origen_bogota <- "+proj=tmerc +lat_0=4.596200416666666 +lon_0=-74.07750791666666
 wgs_84 <- "+proj=longlat +datum=WGS84 +no_defs"
 
 tolima_shape_planar <- shapefile("./analysis_layers/tolima_planar.shp")
+tolima_shape_wgs84 <- shapefile("./analysis_layers/tolima_wgs84.shp")
+
 
 oc_gbif <- read.csv("./data/gbif.csv",
      header = T, sep = ";", dec = ",")
@@ -55,4 +57,12 @@ plot(oc_def_buffer, add = T)
 crop_buffer_oc <- crop(oc_def_buffer, tolima_shape_planar)
 plot(crop_buffer_oc, col = "red", add = T)
 
-shapefile(crop_buffer_oc, "./analysis_layers/buffer_oc_planar.shp")
+shapefile(crop_buffer_oc,
+      "./analysis_layers/buffer_oc_planar.shp",
+       overwrite = T)
+
+oc_def_buffer_wgs <- spTransform(crop_buffer_oc, wgs_84)
+
+shapefile(oc_def_buffer_wgs,
+          "./analysis_layers/buffer_oc_wgs84.shp",
+          overwrite = T)
