@@ -62,7 +62,8 @@ plot(gbif_bias_sp, add = T, col = "blue")
 dummy <- earth_env_cut
 dummy[values(dummy) > 0] <- 0
 
-bias_brick <- rasterize(gbif_bias_sp,library(raster)
+# bias_brick <- rasterize(gbif_bias_sp)
+
 setwd("/home/camilo/Documentos/Capas/")
 
 wgs_84 <- "+proj=longlat +datum=WGS84 +no_defs"
