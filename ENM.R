@@ -40,6 +40,31 @@ occ_test <- ocurrences[-selected, ]
 env_training <- extract(enviromental_data, occ_training[, 2:3])
 env_test <- extract(enviromental_data, occ_test[, 2:3])
 
-names(occ_training)
+env_background <- extract(enviromental_data, background_points)
 
-?extract
+presence_ausence <- c(rep(1, nrow(occ_training)),
+                    rep(0, nrow(coordinates(background_points))))
+
+unified_points <- data.frame(rbind(env_training, env_background))
+
+## Training Maxent Model with tabular data
+bear_maxent <- maxent(
+                    x = enviromental_data,
+                    p = occ_training[, c(3, 2)],
+                    args = c("responsecurves")
+)
+
+env_test
+
+dim(unified_points)
+length(presence_ausence)
+
+presence_ausence
+
+install.packages("rJava")
+install.packages("devtools")
+
+library(rJava)
+library(devtools)
+
+devtools::install_version("rJava", version = "0.9-9", repos = "http://cran.us.r-project.org")
