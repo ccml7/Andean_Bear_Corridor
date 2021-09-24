@@ -1,4 +1,8 @@
 library(raster)
+library(dismo)
+library(rJava)
+library(rgeos)
+library(MASS)
 
 setwd("/home/camilo/Documentos/Mariana/Corredor/Tremarctos_Corridor")
 
@@ -23,7 +27,6 @@ id_punto <- seq(1, dim(oc_def)[1], 1)
 
 oc_def <- data.frame(id_punto, oc_def)
 
-## Filter anomalous points
 ## From oriental cordillera
 oc_cordillera_central <- which(oc_def$Longitude < -74.7)
 oc_def <- oc_def[oc_cordillera_central, ]
@@ -36,7 +39,19 @@ oc_def_sp <- oc_def
 coordinates(oc_def_sp) <- ~Longitude + Latitude
 crs(oc_def_sp) <- wgs_84
 
-plot(tolima_shape_planar, axes = T)
+## Filter anomalous points
+## Outside Tolima
+inside_tolima <- over(oc_def_sp, tolima_shape_wgs84)$COD_DEPART
+outside <- which(is.na(inside_tolima) == TRUE)
+
+oc_def <- oc_def[-outside, ]
+
+## Transform again ocurrences to spatial points
+oc_def_sp <- oc_def
+coordinates(oc_def_sp) <- ~Longitude + Latitude
+crs(oc_def_sp) <- wgs_84
+
+plot(tolima_shape_wgs84, axes = T)
 points(oc_def_sp)
 
 shapefile(oc_def_sp, "./analysis_layers/shapes/puntos_oso.shp",
@@ -51,11 +66,13 @@ shapefile(oc_def_projected, "./analysis_layers/shapes/puntos_oso.shp",
           overwrite = TRUE)
 
 oc_def_buffer <- buffer(oc_def_projected, width = 20000, dissolve = T)
+plot(tolima_shape_planar)
 plot(oc_def_buffer, add = T)
 
 ### Crop buffer by Tolima limits
 crop_buffer_oc <- crop(oc_def_buffer, tolima_shape_planar)
 plot(crop_buffer_oc, col = "red", add = T)
+points(oc_def_projected, col = "black", pch = 16)
 
 shapefile(crop_buffer_oc,
       "./analysis_layers/shapes/buffer_oc_planar.shp",

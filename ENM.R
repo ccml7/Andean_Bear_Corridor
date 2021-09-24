@@ -1,6 +1,8 @@
 library(dismo)
 library(raster)
 library(rgeos)
+library(rJava)
+
 
 ## Study Area
 niche_m <- shapefile("./analysis_layers/shapes/buffer_oc_wgs84.shp")
@@ -8,6 +10,8 @@ niche_m <- shapefile("./analysis_layers/shapes/buffer_oc_wgs84.shp")
 ## Occurrence points
 ocurrences <- read.table("./data/ocurrencias_oso.txt",
     header = T, sep = "\t", dec = ",")
+
+ocurrences_sp <- shapefile("./analysis_layers/shapes/puntos_oso.shp")
 
 ## Enviromental data
 files <- list.files("./analysis_layers/raster/predictors",
@@ -28,6 +32,12 @@ background_points <- spsample(
                         n = 10000,
                         type = "random")
 
+env_bg <- extract(enviromental_data, background_points)
+env_oc <- extract(enviromental_data, ocurrences_sp)
+
+env_oc_training <- env_oc[selected, ]
+env_oc_test <- env_oc[-selected, ]
+
 ## Set the training and testing data
 
 # Select the 50% of ocurrences for training
@@ -36,35 +46,35 @@ selected <- sample(seq(1, nrow(ocurrences)), nrow(ocurrences) * 0.5)
 occ_training <- ocurrences[selected, ]
 occ_test <- ocurrences[-selected, ]
 
-## Extract climatic data for occurence and background points
-env_training <- extract(enviromental_data, occ_training[, 2:3])
-env_test <- extract(enviromental_data, occ_test[, 2:3])
-
-env_background <- extract(enviromental_data, background_points)
-
-presence_ausence <- c(rep(1, nrow(occ_training)),
-                    rep(0, nrow(coordinates(background_points))))
-
-unified_points <- data.frame(rbind(env_training, env_background))
-
 ## Training Maxent Model with tabular data
 bear_maxent <- maxent(
                     x = enviromental_data,
                     p = occ_training[, c(3, 2)],
-                    args = c("responsecurves")
+                    args = c("responsecurves"),
+                    path = paste0("./outputs/maxent_output")
 )
 
-env_test
+bear_maxent@results
+pred1 <- predict(bear_maxent, enviromental_data)
+plot(pred1)
 
-dim(unified_points)
-length(presence_ausence)
+## Model Evaluation
+mod_eval_train <- dismo::evaluate(p = env_oc_training,
+                                  a = env_bg,
+                                  model = bear_maxent)
+print(mod_eval_train)
 
-presence_ausence
+mod_eval_test <- dismo::evaluate(p = env_oc_test,
+                                  a = env_bg,
+                                  model = bear_maxent)
+print(mod_eval_test)
 
-install.packages("rJava")
-install.packages("devtools")
 
-library(rJava)
-library(devtools)
+## training AUC may be higher than testing AUC
 
-devtools::install_version("rJava", version = "0.9-9", repos = "http://cran.us.r-project.org")
+thd1 <- threshold(mod_eval_train, "no_omission")
+thd2 <- threshold(mod_eval_train, "spec_sens")
+
+plot(pred1 >= thd1)
+
+??treshold
