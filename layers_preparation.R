@@ -18,6 +18,7 @@ setwd("/home/camilo/Documentos/Mariana/Corredor/Tremarctos_Corridor")
 forest <- raster("./layers/bosque_tol.tif")
 forest_wgs <- projectRaster(forest, worldclim)
 forest_cut <- mask(crop(forest_wgs, oc_def_buffer_wgs), oc_def_buffer_wgs)
+forest_cut[values(forest_cut) > 0] <- 1
 
 worldclim_cut <- mask(crop(worldclim, oc_def_buffer_wgs), oc_def_buffer_wgs)
 earth_env_cut <- mask(crop(earth_env, oc_def_buffer_wgs), oc_def_buffer_wgs)
@@ -112,7 +113,7 @@ values(bias_raster) <- values(bias_raster) / max_count_bias
 
 plot(bias_raster)
 
-writeRaster(bias_raster, 
+writeRaster(bias_raster,
             "./analysis_layers/raster/bias_raster.tif",
             overwrite = TRUE
 )

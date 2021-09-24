@@ -25,23 +25,23 @@ enviromental_data <- stack(paste("./analysis_layers/raster/predictors/",
 bias_layer <- raster("./analysis_layers/raster/bias_raster.tif")
 
 ## Background points
-set.seed(1)
-SpatialPoints()
-background_points <- spsample(
-                        x = niche_m,
-                        n = 10000,
-                        type = "random")
+# set.seed(1)
+# SpatialPoints()
+# background_points <- spsample(
+#                         x = niche_m,
+#                         n = 10000,
+#                         type = "random")
 
-env_bg <- extract(enviromental_data, background_points)
+# Select the 50% of ocurrences for training
+selected <- sample(seq(1, nrow(ocurrences)), nrow(ocurrences) * 0.5)
+
+env_bg <- extract(enviromental_data, gbif_bias_sp)
 env_oc <- extract(enviromental_data, ocurrences_sp)
 
 env_oc_training <- env_oc[selected, ]
 env_oc_test <- env_oc[-selected, ]
 
 ## Set the training and testing data
-
-# Select the 50% of ocurrences for training
-selected <- sample(seq(1, nrow(ocurrences)), nrow(ocurrences) * 0.5)
 
 occ_training <- ocurrences[selected, ]
 occ_test <- ocurrences[-selected, ]
@@ -50,6 +50,7 @@ occ_test <- ocurrences[-selected, ]
 bear_maxent <- maxent(
                     x = enviromental_data,
                     p = occ_training[, c(3, 2)],
+                    a = gbif_bias_sp,
                     args = c("responsecurves"),
                     path = paste0("./outputs/maxent_output")
 )
@@ -57,6 +58,10 @@ bear_maxent <- maxent(
 bear_maxent@results
 pred1 <- predict(bear_maxent, enviromental_data)
 plot(pred1)
+
+writeRaster(pred1,
+            "./outputs/Niche_Model_Prediction.tif",
+            overwrite = T)
 
 ## Model Evaluation
 mod_eval_train <- dismo::evaluate(p = env_oc_training,
@@ -75,6 +80,5 @@ print(mod_eval_test)
 thd1 <- threshold(mod_eval_train, "no_omission")
 thd2 <- threshold(mod_eval_train, "spec_sens")
 
-plot(pred1 >= thd1)
-
-??treshold
+plot(pred1 >= thd2)
+points(oc_def_sp)
