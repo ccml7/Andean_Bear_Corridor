@@ -79,6 +79,3 @@ print(mod_eval_test)
 
 thd1 <- threshold(mod_eval_train, "no_omission")
 thd2 <- threshold(mod_eval_train, "spec_sens")
-
-plot(pred1 >= thd2)
-points(oc_def_sp)
